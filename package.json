@@ -1,0 +1,12 @@
+{
+  "name": "deer-office",
+  "version": "0.1.0",
+  "description": "A deer themed roguelike.",
+  "main": "main.js",
+  "author": "Kaura Peura",
+  "devDependencies": {
+    "chokidar": "^3.5.2",
+    "esbuild": "^0.14.2",
+    "typescript": "^4.5.2"
+  }
+}
