@@ -10,7 +10,7 @@ export function imageBitmapFromURL(url: string): Promise<ImageBitmap> {
         try {
             const image = new Image();
             image.addEventListener('error', (e: ErrorEvent) => { reject(new Error(e.message)); });
-            image.addEventListener('load', () => { resolve(createImageBitmap(image, { imageOrientation: 'flipY' })); });
+            image.addEventListener('load', () => { resolve(createImageBitmap(image)); });
             image.src = url;
         } catch (err) {
             reject(err);

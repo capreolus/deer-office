@@ -170,13 +170,13 @@ export function mapTileDisplayListToQuads(out: Float32Vector, list: TileDisplayC
 
         const texCoord = mapping.map(index);
         const tu1 = texCoord[0];
-        const tv1 = texCoord[1];
+        const tv2 = texCoord[1];
         const tu2 = tu1 + tileWidthInTexels;
-        const tv2 = tv1 + tileHeightInTexels;
+        const tv1 = tv2 + tileHeightInTexels;
         const tuMin = tu1 + hTexelWidth
-        const tvMin = tv1 + hTexelHeight
+        const tvMin = tv2 + hTexelHeight
         const tuMax = tu2 - hTexelWidth
-        const tvMax = tv2 - hTexelHeight
+        const tvMax = tv1 - hTexelHeight
 
         const r = entry.r;
         const g = entry.g;
