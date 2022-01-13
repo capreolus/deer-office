@@ -2,11 +2,9 @@
 
 /**
  * @module
- * The shader and related functionality for the tile display.
+ * The shader for the tile display.
  */
 
-import { Float32Vector } from './buffer';
-import { TileDisplayCommand, TileMapping } from './tile';
 import { programFromSources } from './webgl';
 
 export const VertexSizeInBytes = 48;
@@ -132,107 +130,4 @@ export function setupAndEnableVertexArrays(gl: WebGL2RenderingContext, buffer: W
     gl.enableVertexAttribArray(3);
     gl.enableVertexAttribArray(4);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-}
-
-export function quadIndices(count: number): number[] {
-    const result = [];
-    for (let i = 0; i < count; i++) {
-        const offset = 4 * i;
-        result.push(offset + 0);
-        result.push(offset + 1);
-        result.push(offset + 2);
-        result.push(offset + 2);
-        result.push(offset + 3);
-        result.push(offset + 0);
-    }
-
-    return result;
-}
-
-export function mapTileDisplayListToQuads(out: Float32Vector, list: TileDisplayCommand[], mapping: TileMapping): void {
-    const tileWidth = mapping.tileWidth;
-    const tileHeight = mapping.tileHeight
-    const tileWidthInTexels = tileWidth * mapping.texelWidth;
-    const tileHeightInTexels = tileHeight * mapping.texelHeight;
-    const hTexelWidth = 0.5 * mapping.texelWidth;
-    const hTexelHeight = 0.5 * mapping.texelHeight;
-
-    for (const entry of list) {
-        const index = entry.index;
-        if (index < 0 || index >= mapping.nTiles) {
-            continue;
-        }
-
-        const x1 = entry.x;
-        const y1 = entry.y;
-        const x2 = x1 + tileWidth;
-        const y2 = y1 + tileHeight;
-
-        const texCoord = mapping.map(index);
-        const tu1 = texCoord[0];
-        const tv2 = texCoord[1];
-        const tu2 = tu1 + tileWidthInTexels;
-        const tv1 = tv2 + tileHeightInTexels;
-        const tuMin = tu1 + hTexelWidth
-        const tvMin = tv2 + hTexelHeight
-        const tuMax = tu2 - hTexelWidth
-        const tvMax = tv1 - hTexelHeight
-
-        const r = entry.r;
-        const g = entry.g;
-        const b = entry.b;
-        const a = entry.a;
-
-        out.push(x1);
-        out.push(y1);
-        out.push(tu1);
-        out.push(tv1);
-        out.push(tuMin);
-        out.push(tvMin);
-        out.push(tuMax);
-        out.push(tvMax);
-        out.push(r);
-        out.push(g);
-        out.push(b);
-        out.push(a);
-
-        out.push(x2);
-        out.push(y1);
-        out.push(tu2);
-        out.push(tv1);
-        out.push(tuMin);
-        out.push(tvMin);
-        out.push(tuMax);
-        out.push(tvMax);
-        out.push(r);
-        out.push(g);
-        out.push(b);
-        out.push(a);
-
-        out.push(x2);
-        out.push(y2);
-        out.push(tu2);
-        out.push(tv2);
-        out.push(tuMin);
-        out.push(tvMin);
-        out.push(tuMax);
-        out.push(tvMax);
-        out.push(r);
-        out.push(g);
-        out.push(b);
-        out.push(a);
-
-        out.push(x1);
-        out.push(y2);
-        out.push(tu1);
-        out.push(tv2);
-        out.push(tuMin);
-        out.push(tvMin);
-        out.push(tuMax);
-        out.push(tvMax);
-        out.push(r);
-        out.push(g);
-        out.push(b);
-        out.push(a);
-    }
 }

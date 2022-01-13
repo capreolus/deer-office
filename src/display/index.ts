@@ -2,8 +2,7 @@
 
 /**
  * @module
- * Module entry point.
+ * Module index.
  */
 
-export { newDisplay } from './display';
-export { TileDisplayCommand } from './tile';
+export { newDisplay, TileDisplayCommand } from './core';
