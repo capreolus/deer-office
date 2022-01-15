@@ -10,6 +10,7 @@ const Constants = {
     WorldHeight: 64,
 } as const;
 
+import { Action } from './engine/action';
 import { ComponentMemory } from './engine/component';
 import { step } from './engine/core';
 import { World } from './engine/world';
@@ -18,6 +19,7 @@ import { generateWorld } from './game';
 export interface Server {
     commandGenerateWorld(): void
     commandGetPlayerMemory(): ComponentMemory|null
+    commandNextPlayerAction(action: Action): void
     commandStepGame(): boolean
 }
 
@@ -33,6 +35,13 @@ class ServerImpl {
         const players = this._world.findPlayers();
         if (players.length < 1) { return null; }
         return players[0].memory;
+    }
+
+    commandNextPlayerAction(action: Action): void {
+        if (this._world == null) { return; }
+        const players = this._world.findPlayers();
+        if (players.length < 1) { return; }
+        players[0].actor.nextAction = action;
     }
 
     commandStepGame(): boolean {

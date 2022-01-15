@@ -6,6 +6,7 @@
  */
 
 import { newClient } from './client/core';
+import { Action } from './engine/action';
 import { newServer } from './server';
 
 const server = newServer();
@@ -17,6 +18,16 @@ const client = newClient({
 
     onRequestPlayerMemory: () => {
         return Promise.resolve(server.commandGetPlayerMemory());
+    },
+
+    onNextPlayerAction: (action: Action) => {
+        server.commandNextPlayerAction(action);
+        return Promise.resolve();
+    },
+
+    onStepWorld: () => {
+        server.commandStepGame();
+        return Promise.resolve();
     }
 });
 
