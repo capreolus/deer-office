@@ -7,6 +7,7 @@
 
 export enum VisualType {
     Floor,
+    Plant,
     Player,
     Unknown,
     Wall,

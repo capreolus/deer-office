@@ -35,15 +35,21 @@ function newWall(position: Vec3): Partial<EntityComponents> {
     };
 }
 
+function newPlant(position: Vec3): Partial<EntityComponents> {
+    return {
+        position,
+        appearance: newComponentAppearance(VisualType.Plant),
+    };
+}
+
 export function generateWorld(width: number, height: number): World {
     const world = newWorld(newVec3(width, height, 1));
 
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
             world.insert(newFloor(newVec3(x, y)));
-            if (x === 0 || x === width - 1 || y === 0 || y === height - 1) {
-                world.insert(newWall(newVec3(x, y)));
-            }
+            if (x === 0 || x === width - 1 || y === 0 || y === height - 1) { world.insert(newWall(newVec3(x, y))); }
+            else if (Math.random() < 0.1) { world.insert(newPlant(newVec3(x, y))); }
         }
     }
 
