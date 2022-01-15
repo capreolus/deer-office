@@ -11,22 +11,33 @@ import { Impression } from '../engine/impression';
 import { ComponentMemory } from '../engine/component';
 
 interface Tile {
-    readonly tileIndex: number
+    readonly index: number
     readonly r: number
     readonly g: number
     readonly b: number
     readonly a: number
 }
 
-function mapImpressionToTile(impression: Impression): Tile {
+function impressionToTile(impression: Impression): Tile {
     switch (impression.visualType) {
-        case VisualType.Floor: return { tileIndex: 249, r: 0.1, g: 0.1, b: 0.1, a: 1.0 };
-        case VisualType.Plant: return { tileIndex: 231, r: 0.2, g: 0.6, b: 0.2, a: 1.0 };
-        case VisualType.Player: return { tileIndex: 64, r: 1.0, g: 1.0, b: 0.9, a: 1.0 };
-        case VisualType.Wall: return { tileIndex: 35, r: 0.9, g: 0.7, b: 0.4, a: 1.0 };
+        case VisualType.Floor: return { index: 249, r: 0.1, g: 0.1, b: 0.1, a: 1.0 };
+        case VisualType.Plant: return { index: 231, r: 0.2, g: 0.6, b: 0.2, a: 1.0 };
+        case VisualType.Player: return { index: 64, r: 1.0, g: 1.0, b: 0.9, a: 1.0 };
+        case VisualType.Wall: return { index: 35, r: 0.9, g: 0.7, b: 0.4, a: 1.0 };
     }
 
-    return { tileIndex: 63, r: 1.0, g: 0.0, b: 1.0, a: 1.0 };
+    return { index: 63, r: 1.0, g: 0.0, b: 1.0, a: 1.0 };
+}
+
+function impressionToPriority(impression: Impression): number {
+    switch (impression.visualType) {
+        case VisualType.Floor: return 3;
+        case VisualType.Plant: return 2;
+        case VisualType.Player: return 0;
+        case VisualType.Wall: return 1;
+    }
+
+    return -1;
 }
 
 export function visualize(memory: ComponentMemory, displayWidth: number, displayHeight: number, tileWidth: number, tileHeight: number): TileDisplayCommand[] {
@@ -35,13 +46,14 @@ export function visualize(memory: ComponentMemory, displayWidth: number, display
         const [ax, ay, az] = a.position;
         const [bx, by, bz] = b.position;
 
-        if (az < by) { return -1; }
-        if (az > bz) { return 1; }
         if (ay < by) { return -1; }
         if (ay > by) { return 1; }
         if (ax < bx) { return -1; }
         if (ax > bx) { return 1; }
-        return 0;
+        if (az > bz) { return -1; }
+        if (az < bz) { return 1; }
+
+        return impressionToPriority(a) - impressionToPriority(b);
     });
 
     const result: TileDisplayCommand[] = [];
@@ -62,17 +74,27 @@ export function visualize(memory: ComponentMemory, displayWidth: number, display
         yWindow = Math.floor(memory.areaSize[1] / 2) - Math.floor(displayHeight / 2);
     }
 
+    let xLast: number = Number.MIN_SAFE_INTEGER;
+    let yLast: number = Number.MIN_SAFE_INTEGER;
+
     for (let impression of list) {
-        const viz = mapImpressionToTile(impression);
+        if (impression.position[0] === xLast && impression.position[1] === yLast) {
+            continue;
+        }
+
+        const tile = impressionToTile(impression);
         result.push({
-            index: viz.tileIndex,
+            index: tile.index,
             x: (impression.position[0] - xWindow) * tileWidth,
             y: (impression.position[1] - yWindow) * tileHeight,
-            r: viz.r,
-            g: viz.g,
-            b: viz.b,
-            a: viz.a,
+            r: tile.r,
+            g: tile.g,
+            b: tile.b,
+            a: tile.a,
         })
+
+        xLast = impression.position[0];
+        yLast = impression.position[1];
     }
 
     return result;
