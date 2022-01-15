@@ -135,7 +135,7 @@ class ClientImpl implements Client {
         if (memory != null) {
             window.requestAnimationFrame(() => {
                 const [tileWidth, tileHeight] = this._display.tileSize('default');
-                const displayList = visualize(memory, tileWidth, tileHeight);
+                const displayList = visualize(memory, Constants.DisplayWidthInTiles, Constants.DisplayHeightInTiles, tileWidth, tileHeight);
                 this._display.clear(0.0, 0.0, 0.0, 1.0);
                 this._display.drawSprites('default', displayList);
             });

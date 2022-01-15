@@ -29,7 +29,7 @@ function mapImpressionToTile(impression: Impression): Tile {
     return { tileIndex: 63, r: 1.0, g: 0.0, b: 1.0, a: 1.0 };
 }
 
-export function visualize(memory: ComponentMemory, tileWidth: number, tileHeight: number): TileDisplayCommand[] {
+export function visualize(memory: ComponentMemory, displayWidth: number, displayHeight: number, tileWidth: number, tileHeight: number): TileDisplayCommand[] {
     const list = [...memory.entities.values()];
     list.sort((a: Impression, b: Impression) => {
         const [ax, ay, az] = a.position;
@@ -45,12 +45,29 @@ export function visualize(memory: ComponentMemory, tileWidth: number, tileHeight
     });
 
     const result: TileDisplayCommand[] = [];
+    const xOffset = Math.floor(displayWidth / 2);
+    const yOffset = Math.floor(displayHeight / 2);
+
+    let xWindow;
+    if (displayWidth < memory.areaSize[0]) {
+        xWindow = Math.max(0, Math.min(memory.areaSize[0] - displayWidth, memory.position[0] - xOffset));
+    } else {
+        xWindow = Math.floor(memory.areaSize[0] / 2) - Math.floor(displayWidth / 2);
+    }
+
+    let yWindow;
+    if (displayHeight < memory.areaSize[1]) {
+        yWindow = Math.max(0, Math.min(memory.areaSize[1] - displayHeight, memory.position[1] - yOffset));
+    } else {
+        yWindow = Math.floor(memory.areaSize[1] / 2) - Math.floor(displayHeight / 2);
+    }
+
     for (let impression of list) {
         const viz = mapImpressionToTile(impression);
         result.push({
             index: viz.tileIndex,
-            x: impression.position[0] * tileWidth,
-            y: impression.position[1] * tileHeight,
+            x: (impression.position[0] - xWindow) * tileWidth,
+            y: (impression.position[1] - yWindow) * tileHeight,
             r: viz.r,
             g: viz.g,
             b: viz.b,

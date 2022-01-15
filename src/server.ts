@@ -6,8 +6,8 @@
  */
 
 const Constants = {
-    WorldWidth: 64,
-    WorldHeight: 64,
+    WorldWidth: 100,
+    WorldHeight: 10,
 } as const;
 
 import { Action } from './engine/action';
