@@ -8,6 +8,7 @@
 import { Float32Vector, newFloat32Vector } from './buffer';
 import { imageBitmapFromURL } from './image';
 import { orthoProjection } from './math';
+import { addDevicePixelRatioChangeListener } from './pixel';
 import { newTileShader, setupAndEnableVertexArrays, TileShader, VertexSizeInElements } from './shader';
 import { textureFromImage } from './webgl';
 
@@ -177,9 +178,13 @@ class DisplayImpl implements Display {
     private readonly _vertexCache: Float32Vector = newFloat32Vector();
     private readonly _nameToTileSet: Map<string, Tileset> = new Map();
 
+    private _width: number = 1;
+    private _height: number = 1;
+    private _scaling: number = 1;
+
     readonly canvas: HTMLCanvasElement;
 
-    constructor (width: number, height: number, scaling: number = 1) {
+    constructor (width: number, height: number, scaling: number) {
         const canvas = document.createElement('canvas');
         canvas.style.imageRendering = 'pixelated';
 
@@ -224,16 +229,21 @@ class DisplayImpl implements Display {
         this._vertexArray = vertexArray;
         this._vertexBuffer = vertexBuffer;
         this._gl = gl;
-
         this.canvas = canvas;
+
+        addDevicePixelRatioChangeListener(() => { this.resize(this._width, this._height, this._scaling); });
         this.resize(width, height, scaling);
     }
 
     resize(width: number, height: number, scaling: number = 2): void {
+        this._width = width;
+        this._height = height;
+        this._scaling = scaling;
         this.canvas.width = width;
         this.canvas.height = height;
-        this.canvas.style.width = `${scaling * width}px`;
-        this.canvas.style.height = `${scaling * height}px`;
+        const fixedScaling = Math.max(1, Math.round(scaling * window.devicePixelRatio));
+        this.canvas.style.width = `${fixedScaling * width / window.devicePixelRatio}px`;
+        this.canvas.style.height = `${fixedScaling * height / window.devicePixelRatio}px`;
         this._gl.viewport(0, 0, width, height);
     }
 
