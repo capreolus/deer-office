@@ -29,12 +29,14 @@ export function newComponentAppearance(visualType = VisualType.Unknown): Compone
 export interface ComponentMemory {
     readonly entities: Map<number, Impression>;
     position: Vec3
+    areaSize: Vec3
 }
 
 export function newComponentMemory(): ComponentMemory {
     return {
         entities: new Map(),
         position: newVec3(),
+        areaSize: newVec3(),
     };
 }
 

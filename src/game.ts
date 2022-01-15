@@ -36,7 +36,8 @@ function newWall(position: Vec3): Partial<EntityComponents> {
 }
 
 export function generateWorld(width: number, height: number): World {
-    const world = newWorld();
+    const world = newWorld(newVec3(width, height, 1));
+
     for (let y = 0; y < height; y++) {
         for (let x = 0; x < width; x++) {
             world.insert(newFloor(newVec3(x, y)));

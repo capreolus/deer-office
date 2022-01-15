@@ -6,9 +6,15 @@
  */
 
 import { EntityComponents, EntityPlayer, EntityVisible, isEntityPlayer, isEntityVisible } from './entity';
+import { clone, newVec3, subVec3, Vec3 } from './math';
 
 export interface World {
     time(): number
+
+    size(): Vec3
+    boundsMin(): Vec3
+    boundsMax(): Vec3
+
     findPlayers(): readonly EntityPlayer[]
     findVisible(): readonly EntityVisible[]
 
@@ -22,9 +28,27 @@ class WorldImpl implements World {
 
     private _nextId: number = 1;
     private _time: number = 0;
+    private _size: Vec3;
+
+    constructor (size: Vec3) {
+        if (size.some(e => !Number.isInteger(e) || e < 1)) { throw new Error('world dimensions must be positive integers'); }
+        this._size = clone(size);
+    }
 
     time(): number {
         return this._time;
+    }
+
+    size(): Vec3 {
+        return clone(this._size);
+    }
+
+    boundsMin(): Vec3 {
+        return newVec3(0, 0, 0);
+    }
+
+    boundsMax(): Vec3 {
+        return subVec3(clone(this._size), newVec3(1, 1, 1));
     }
 
     findPlayers(): readonly EntityPlayer[] {
@@ -53,6 +77,6 @@ class WorldImpl implements World {
     }
 }
 
-export function newWorld(): World {
-    return new WorldImpl();
+export function newWorld(size: Vec3): World {
+    return new WorldImpl(size);
 }
