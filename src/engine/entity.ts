@@ -5,17 +5,27 @@
  * The predefined entity types for the ECS.
  */
 
-import { ComponentActor, ComponentAppearance, ComponentMemory, ComponentPosition } from './component';
+import { ComponentActor, ComponentAppearance, ComponentCollision, ComponentMemory, ComponentPosition } from './component';
 
 export interface EntityComponents {
     readonly actor: ComponentActor|null
     readonly appearance: ComponentAppearance|null
+    readonly collision: ComponentCollision|null
     readonly memory: ComponentMemory|null
     readonly position: ComponentPosition|null
 }
 
 export interface Entity extends EntityComponents {
     readonly id: number
+}
+
+export type EntityPhysical = Entity & {
+    readonly collision: ComponentCollision
+    readonly position: ComponentPosition
+};
+
+export function isEntityPhysical(e: Entity): e is EntityPhysical {
+    return e.collision != null && e.position != null;
 }
 
 export type EntityPlayer = Entity & {
@@ -26,6 +36,14 @@ export type EntityPlayer = Entity & {
 
 export function isEntityPlayer(e: Entity): e is EntityPlayer {
     return e.actor != null && e.memory != null && e.position != null;
+}
+
+export type EntityPositioned = Entity & {
+    readonly position: ComponentPosition
+}
+
+export function isEntityPositioned(e: Entity): e is EntityPositioned {
+    return e.position != null;
 }
 
 export type EntityVisible = Entity & {

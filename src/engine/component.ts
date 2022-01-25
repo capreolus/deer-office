@@ -9,6 +9,7 @@ import { Action, newActionNone } from './action';
 import { VisualType } from './appearance';
 import { Impression } from './impression';
 import { newVec3, Vec3 } from './math';
+import { Shape } from './shape';
 
 export interface ComponentActor {
     nextAction: Action
@@ -24,6 +25,14 @@ export interface ComponentAppearance {
 
 export function newComponentAppearance(visualType = VisualType.Unknown): ComponentAppearance {
     return { visualType };
+}
+
+export interface ComponentCollision {
+    shape: Shape
+}
+
+export function newComponentCollision(shape: Shape = Shape.Empty): ComponentCollision {
+    return { shape };
 }
 
 export interface ComponentMemory {

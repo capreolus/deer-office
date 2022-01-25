@@ -5,16 +5,16 @@
  * The game server.
  */
 
-const Constants = {
-    WorldWidth: 100,
-    WorldHeight: 10,
-} as const;
-
 import { Action } from './engine/action';
 import { ComponentMemory } from './engine/component';
-import { step } from './engine/core';
+import { newEngine } from './engine/core';
 import { World } from './engine/world';
 import { generateWorld } from './game';
+
+const Constants = {
+    WorldWidth: 100,
+    WorldHeight: 15,
+} as const;
 
 export interface Server {
     commandGenerateWorld(): void
@@ -25,9 +25,11 @@ export interface Server {
 
 class ServerImpl {
     private _world: World|null = null;
+    private _engine = newEngine();
 
     commandGenerateWorld(): void {
         this._world = generateWorld(Constants.WorldWidth, Constants.WorldHeight);
+        this._engine.setWorld(this._world);
     }
 
     commandGetPlayerMemory(): ComponentMemory|null {
@@ -46,7 +48,7 @@ class ServerImpl {
 
     commandStepGame(): boolean {
         if (this._world == null) { return false; }
-        step(this._world);
+        this._engine.stepWorld();
         return true;
     }
 }

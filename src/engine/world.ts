@@ -5,8 +5,8 @@
  * The implementation for the game state.
  */
 
-import { EntityComponents, EntityPlayer, EntityVisible, isEntityPlayer, isEntityVisible } from './entity';
-import { clone, newVec3, subVec3, Vec3 } from './math';
+import { Entity, EntityComponents, EntityPhysical, EntityPlayer, EntityVisible, isEntityPhysical, isEntityPlayer, isEntityVisible } from './entity';
+import { cloneVec3, diffVec3XYZ, newVec3, Vec3 } from './math';
 
 export interface World {
     time(): number
@@ -15,6 +15,8 @@ export interface World {
     boundsMin(): Vec3
     boundsMax(): Vec3
 
+    entities(): readonly Entity[]
+    findPhysical(): readonly EntityPhysical[]
     findPlayers(): readonly EntityPlayer[]
     findVisible(): readonly EntityVisible[]
 
@@ -23,6 +25,8 @@ export interface World {
 }
 
 class WorldImpl implements World {
+    private readonly _entities: Entity[] = [];
+    private readonly _physicalEntities: EntityPhysical[] = [];
     private readonly _playerEntities: EntityPlayer[] = [];
     private readonly _visibleEntitites: EntityVisible[] = [];
 
@@ -32,7 +36,7 @@ class WorldImpl implements World {
 
     constructor (size: Vec3) {
         if (size.some(e => !Number.isInteger(e) || e < 1)) { throw new Error('world dimensions must be positive integers'); }
-        this._size = clone(size);
+        this._size = cloneVec3(size);
     }
 
     time(): number {
@@ -40,7 +44,7 @@ class WorldImpl implements World {
     }
 
     size(): Vec3 {
-        return clone(this._size);
+        return cloneVec3(this._size);
     }
 
     boundsMin(): Vec3 {
@@ -48,7 +52,15 @@ class WorldImpl implements World {
     }
 
     boundsMax(): Vec3 {
-        return subVec3(clone(this._size), newVec3(1, 1, 1));
+        return diffVec3XYZ(this._size, 1, 1, 1);
+    }
+
+    entities(): readonly Entity[] {
+        return this._entities;
+    }
+
+    findPhysical(): readonly EntityPhysical[] {
+        return this._physicalEntities;
     }
 
     findPlayers(): readonly EntityPlayer[] {
@@ -68,10 +80,13 @@ class WorldImpl implements World {
             id: this._nextId++,
             actor: components.actor ?? null,
             appearance: components.appearance ?? null,
+            collision: components.collision ?? null,
             memory: components.memory ?? null,
             position: components.position ?? null,
         };
 
+        this._entities.push(entity);
+        if (isEntityPhysical(entity)) { this._physicalEntities.push(entity); }
         if (isEntityPlayer(entity)) { this._playerEntities.push(entity); }
         if (isEntityVisible(entity)) { this._visibleEntitites.push(entity); }
     }
