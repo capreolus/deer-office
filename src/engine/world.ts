@@ -10,7 +10,6 @@ import { cloneVec3, diffVec3XYZ, newVec3, Vec3 } from './math';
 
 export interface World {
     time(): number
-
     size(): Vec3
     boundsMin(): Vec3
     boundsMax(): Vec3
@@ -20,7 +19,7 @@ export interface World {
     findPlayers(): readonly EntityPlayer[]
     findVisible(): readonly EntityVisible[]
 
-    step(): void
+    stepTime(): void
     insert(entity: Partial<EntityComponents>): void
 }
 
@@ -71,7 +70,7 @@ class WorldImpl implements World {
         return this._visibleEntitites;
     }
 
-    step() {
+    stepTime() {
         this._time++;
     }
 
