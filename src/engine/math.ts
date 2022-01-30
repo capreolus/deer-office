@@ -104,6 +104,18 @@ export function quotVec3XYZ(v: ReadonlyVec3, x: number, y: number, z: number): V
     );
 }
 
+export function dotVec3(a: ReadonlyVec3, b: ReadonlyVec3): number {
+    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+}
+
+export function absVec3(v: ReadonlyVec3): Vec3 {
+    return newVec3(
+        Math.abs(v[0]),
+        Math.abs(v[1]),
+        Math.abs(v[2]),
+    );
+}
+
 export function maxVec3(a: ReadonlyVec3, b: ReadonlyVec3): Vec3 {
     return newVec3(
         Math.max(a[0], b[0]),
@@ -146,4 +158,25 @@ export function isInsideVec3(v: ReadonlyVec3, min: ReadonlyVec3, max: ReadonlyVe
 
 export function volume(v: ReadonlyVec3): number {
     return v[0] * v[1] * v[2];
+}
+
+export function greatestDivisor(arr: readonly number[]): number {
+    const list = arr.filter(e => e !== 0).map(e => Math.abs(e));
+    if (list.length < 1) {
+        return 1;
+    }
+
+    let limit = list.reduce((min: number, e: number) => Math.min(min, e));
+    let result = 1;
+
+    for (let div = 2; div <= limit; div++) {
+        if (arr.every(e => e % div === 0)) {
+            arr.forEach(e => e /= div);
+            result *= div;
+            limit /= div;
+            div = 1;
+        }
+    }
+
+    return result;
 }
