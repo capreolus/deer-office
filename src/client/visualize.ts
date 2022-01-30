@@ -95,7 +95,19 @@ export function visualize(memory: ComponentMemory, displayWidth: number, display
             g: tile.g * brightness,
             b: tile.b * brightness,
             a: tile.a,
-        })
+        });
+
+        if (impression.time < time) {
+            result.push({
+                index: 177,
+                x: (impression.position[0] - xWindow) * tileWidth,
+                y: (impression.position[1] - yWindow) * tileHeight,
+                r: 0.5,
+                g: 0.5,
+                b: 0.5,
+                a: 0.25,
+            });
+        }
 
         xLast = impression.position[0];
         yLast = impression.position[1];
