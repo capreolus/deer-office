@@ -10,13 +10,12 @@ import { newComponentActor, newComponentAppearance, newComponentCollision, newCo
 import { EntityComponents } from './engine/entity';
 import { newVec3, Vec3 } from './engine/math';
 import { Shape } from './engine/shape';
-import { updatePlayerMemory } from './engine/system';
 import { newWorld, World } from './engine/world';
 
 function newFloor(position: Vec3): Partial<EntityComponents> {
     return {
         appearance: newComponentAppearance(VisualType.Floor),
-        collision: newComponentCollision(Shape.Floor),
+        collision: newComponentCollision(Shape.Floor, Shape.Floor),
         position,
     };
 }
@@ -25,7 +24,7 @@ function newPlayer(position: Vec3): Partial<EntityComponents> {
     return {
         actor: newComponentActor(),
         appearance: newComponentAppearance(VisualType.Player),
-        collision: newComponentCollision(Shape.Filled),
+        collision: newComponentCollision(Shape.Filled, Shape.Empty),
         memory: newComponentMemory(),
         position,
     }
@@ -34,7 +33,7 @@ function newPlayer(position: Vec3): Partial<EntityComponents> {
 function newWall(position: Vec3): Partial<EntityComponents> {
     return {
         appearance: newComponentAppearance(VisualType.Wall),
-        collision: newComponentCollision(Shape.Filled),
+        collision: newComponentCollision(Shape.Filled, Shape.Filled),
         position,
     };
 }
@@ -42,7 +41,7 @@ function newWall(position: Vec3): Partial<EntityComponents> {
 function newPlant(position: Vec3): Partial<EntityComponents> {
     return {
         appearance: newComponentAppearance(VisualType.Plant),
-        collision: newComponentCollision(Shape.Empty),
+        collision: newComponentCollision(Shape.Empty, Shape.Empty),
         position,
     };
 }
@@ -68,6 +67,5 @@ export function generateWorld(width: number, height: number): World {
     }
 
     world.insert(newPlayer(newVec3(2, 2)));
-    updatePlayerMemory(world);
     return world;
 }

@@ -6,22 +6,23 @@
  */
 
 import { newActionNone } from './action';
-import { CellFlag, SpatialCache } from './cache';
+import { Cache, CellFlag, SpatialCache } from './cache';
 import { delta, Direction2D } from './direction';
 import { EntityPositioned } from './entity';
 import { cloneVec3, copyVec3, isInsideVec3, newVec3, ReadonlyVec3, sumVec3 } from './math';
 import { World } from './world';
 
-function moveEntity(entity: EntityPositioned, cache: SpatialCache, newPosition: ReadonlyVec3) {
+function moveEntity(entity: EntityPositioned, spatialCache: SpatialCache, newPosition: ReadonlyVec3) {
     const oldPosition = cloneVec3(entity.position);
     copyVec3(entity.position, newPosition);
-    cache.entityMoved(entity, oldPosition);
+    spatialCache.entityMoved(entity, oldPosition);
 }
 
-export function performActions(world: World, cache: SpatialCache) {
+export function performActions(world: World, cache: Cache) {
     const wMin = world.boundsMin();
     const wMax = world.boundsMax();
-    const canStep = (v: ReadonlyVec3) => isInsideVec3(v, wMin, wMax) && (cache.cellFlags(v) & CellFlag.Filled) === 0x0;
+    const spatialCache = cache.spatial;
+    const canStep = (v: ReadonlyVec3) => isInsideVec3(v, wMin, wMax) && (spatialCache.cellFlags(v) & CellFlag.FilledPhysical) === 0x0;
 
     for (const player of world.findPlayers()) {
         const action = player.actor.nextAction;
@@ -41,7 +42,7 @@ export function performActions(world: World, cache: SpatialCache) {
                         const targetXY = sumVec3(player.position, step);
 
                         if (canStep(targetXY)) {
-                            moveEntity(player, cache, targetXY);
+                            moveEntity(player, spatialCache, targetXY);
                         }
 
                         break;
@@ -57,11 +58,11 @@ export function performActions(world: World, cache: SpatialCache) {
                         const targetY = sumVec3(player.position, newVec3(0, step[1], 0));
 
                         if (canStep(targetXY)) {
-                            moveEntity(player, cache, targetXY);
+                            moveEntity(player, spatialCache, targetXY);
                         } else if (canStep(targetX) && !canStep(targetY)) {
-                            moveEntity(player, cache, targetX);
+                            moveEntity(player, spatialCache, targetX);
                         } else if (!canStep(targetX) && canStep(targetY)) {
-                            moveEntity(player, cache, targetY);
+                            moveEntity(player, spatialCache, targetY);
                         }
 
                         break;
@@ -79,13 +80,21 @@ export function performActions(world: World, cache: SpatialCache) {
     }
 }
 
-export function updatePlayerMemory(world: World) {
+export function updatePlayerMemory(world: World, cache: Cache) {
     for (let player of world.findPlayers()) {
         const memory = player.memory;
         memory.position = cloneVec3(player.position);
         memory.areaSize = world.size();
+        memory.areaTime = world.time();
+
+        const fieldOfViewCache = cache.fieldOfView;
+        fieldOfViewCache.update(player.position, 16, cache.spatial);
 
         for (let entity of world.findVisible()) {
+            if (!fieldOfViewCache.isVisible(entity.position)) {
+                continue;
+            }
+
             memory.entities.set(entity.id, {
                 id: entity.id,
                 position: cloneVec3(entity.position),

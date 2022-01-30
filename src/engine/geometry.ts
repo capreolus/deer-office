@@ -130,11 +130,7 @@ export function cast(out: number[], a: ReadonlyVec3, b: ReadonlyVec3, scale: num
         yStep >= Constants.MaxDelta ||
         zStep >= Constants.MaxDelta
     ) {
-        reportError(
-            new Error(`A cast ray delta exceeds the maximum length of ${Constants.MaxDelta}`),
-            { a, b, scale },
-        );
-
+        reportError(  new Error(`A cast ray delta exceeds the maximum length of ${Constants.MaxDelta}`), { a, b, scale }, );
         return;
     }
 
@@ -189,11 +185,11 @@ export function cast(out: number[], a: ReadonlyVec3, b: ReadonlyVec3, scale: num
     }
 }
 
-export interface FOV {
+export interface RayCaster {
     cast(output: Uint8Array, target: Uint8Array, size: ReadonlyVec3, origo: ReadonlyVec3, writeMask: number, readMask: number): void;
 }
 
-export class FOVImpl implements FOV {
+class RayCasterImpl implements RayCaster {
     private _rays: Int32Array = new Int32Array();
     private _limits: Int32Array = new Int32Array();
 
@@ -259,6 +255,6 @@ export class FOVImpl implements FOV {
     }
 }
 
-export function newFOV(radius: number, xMax: number, yMax: number, zMax: number): FOV {
-    return new FOVImpl(radius, xMax, yMax, zMax);
+export function newRayCaster(radius: number, xMax: number, yMax: number, zMax: number): RayCaster {
+    return new RayCasterImpl(radius, xMax, yMax, zMax);
 }

@@ -20,7 +20,7 @@ interface Tile {
 
 function impressionToTile(impression: Impression): Tile {
     switch (impression.visualType) {
-        case VisualType.Floor: return { index: 249, r: 0.1, g: 0.1, b: 0.1, a: 1.0 };
+        case VisualType.Floor: return { index: 249, r: 0.4, g: 0.3, b: 0.2, a: 1.0 };
         case VisualType.Plant: return { index: 231, r: 0.2, g: 0.6, b: 0.2, a: 1.0 };
         case VisualType.Player: return { index: 64, r: 1.0, g: 1.0, b: 0.9, a: 1.0 };
         case VisualType.Wall: return { index: 35, r: 0.9, g: 0.7, b: 0.4, a: 1.0 };
@@ -74,6 +74,8 @@ export function visualize(memory: ComponentMemory, displayWidth: number, display
         yWindow = Math.floor(memory.areaSize[1] / 2) - Math.floor(displayHeight / 2);
     }
 
+    const time = memory.areaTime;
+
     let xLast: number = Number.MIN_SAFE_INTEGER;
     let yLast: number = Number.MIN_SAFE_INTEGER;
 
@@ -83,13 +85,15 @@ export function visualize(memory: ComponentMemory, displayWidth: number, display
         }
 
         const tile = impressionToTile(impression);
+        const brightness = impression.time < time ? 0.5 : 1.0;
+
         result.push({
             index: tile.index,
             x: (impression.position[0] - xWindow) * tileWidth,
             y: (impression.position[1] - yWindow) * tileHeight,
-            r: tile.r,
-            g: tile.g,
-            b: tile.b,
+            r: tile.r * brightness,
+            g: tile.g * brightness,
+            b: tile.b * brightness,
             a: tile.a,
         })
 

@@ -7,7 +7,8 @@
 
 import { EntityPositioned, isEntityPhysical, isEntityPositioned } from './entity';
 import { reportError } from './error';
-import { ceilVec3, isInsideVec3, minVec3, newVec3, prodVec3XYZ, quotVec3XYZ, ReadonlyVec3, sumVec3XYZ, volume } from './math';
+import { newRayCaster, RayCaster } from './geometry';
+import { ceilVec3, cloneVec3, diffVec3XYZ, isEqualVec3, isInsideVec3, minVec3, newVec3, prodVec3XYZ, quotVec3XYZ, ReadonlyVec3, sumVec3XYZ, Vec3, volume } from './math';
 import { Shape } from './shape';
 import { World } from './world';
 
@@ -19,10 +20,17 @@ const Constants = {
 
 export enum CellFlag {
     Empty = 0,
-    Filled = 1,
+    FilledPhysical = 1,
+    FilledLight = 2,
 };
 
+export interface SpatialCacheData {
+    readonly cells: Uint8Array
+    readonly size: Vec3
+}
+
 export interface SpatialCache {
+    data(): SpatialCacheData
     rebuild(world: World): void
     cellFlags(position: ReadonlyVec3): number
     entityMoved(entity: EntityPositioned, oldPosition: ReadonlyVec3): void
@@ -35,6 +43,7 @@ interface Chunk {
 }
 
 export class SpatialCacheImpl implements SpatialCache {
+    private _sizeCells: ReadonlyVec3 = newVec3();
     private _xStrideCells: number = 0;
     private _xyStrideCells: number = 0;
     private _cellBoundsMin: ReadonlyVec3 = newVec3();
@@ -71,17 +80,35 @@ export class SpatialCacheImpl implements SpatialCache {
         }
 
         for (const entity of chunk.entities) {
-            if (isEntityPhysical(entity) && entity.collision.shape === Shape.Filled) {
-                const [x, y, z] = entity.position;
-                cells[x + y * xStrideCells + z * xyStrideCells] |= CellFlag.Filled;
+            if (!isEntityPhysical(entity)) {
+                continue;
             }
+
+            const flags =
+                (entity.collision.light === Shape.Filled ? CellFlag.FilledLight : 0) |
+                (entity.collision.physical === Shape.Filled ? CellFlag.FilledPhysical : 0);
+
+            if (flags === 0) {
+                continue;
+            }
+
+            const [x, y, z] = entity.position;
+            cells[x + y * xStrideCells + z * xyStrideCells] |= flags;
         }
+    }
+
+    data(): SpatialCacheData {
+        return {
+            cells: this._cells,
+            size: cloneVec3(this._sizeCells),
+        };
     }
 
     rebuild(world: World) {
         const sizeCells = world.size();
         const [xChunks, yChunks, zChunks] = ceilVec3(quotVec3XYZ(sizeCells, Constants.ChunkWidth, Constants.ChunkHeight, Constants.ChunkDepth));
 
+        this._sizeCells = sizeCells;
         this._xStrideCells = sizeCells[0];
         this._xyStrideCells = sizeCells[0] * sizeCells[1];
         this._cellBoundsMin = world.boundsMin();
@@ -165,4 +192,85 @@ export class SpatialCacheImpl implements SpatialCache {
 
 export function newSpatialCache(): SpatialCache {
     return new SpatialCacheImpl();
+}
+
+export interface FieldOfViewCache {
+    update(origo: ReadonlyVec3, radius: number, spatialCache: SpatialCache): void
+    isVisible(v: ReadonlyVec3): boolean
+    rebuild(world: World): void
+}
+
+class FieldOfViewCacheImpl implements FieldOfViewCache {
+    private _buffer: Uint8Array = new Uint8Array;
+    private _size: ReadonlyVec3 = newVec3();
+    private _boundsMin: ReadonlyVec3 = newVec3();
+    private _boundsMax: ReadonlyVec3 = newVec3();
+    private _xStride: number = 0;
+    private _xyStride: number = 0;
+
+    private readonly _paramsToRayCastingCache: Map<string, RayCaster> = new Map();
+
+    update(origo: ReadonlyVec3, radius: number, spatialCache: SpatialCache): void {
+        if (!isInsideVec3(origo, this._boundsMin, this._boundsMax)) {
+            const errorData = { origo, boundsMin: this._boundsMin, boundsMax: this._boundsMax };
+            reportError(new Error('Tried updating field of view cache with origo out of bounds'), errorData);
+            return;
+        }
+
+        const spatialData = spatialCache.data();
+        if (!isEqualVec3(spatialData.size, this._size)) {
+            const errorData = { fieldOfViewCacheSize: this._size, spatialCacheSize: spatialData.size };
+            reportError(new Error('Field of view cache size doesn\'t match that of the spatial cache'), errorData);
+            return;
+        }
+
+        const [xMax, yMax, zMax] = diffVec3XYZ(this._size, 1, 1, 1);
+        const params = `${radius}:${xMax}:${yMax}:${zMax}`;
+        if (!this._paramsToRayCastingCache.has(params)) {
+            this._paramsToRayCastingCache.set(params, newRayCaster(radius, xMax, yMax, zMax));
+        }
+
+        this._buffer.fill(0);
+        const rayCaster = this._paramsToRayCastingCache.get(params)!;
+        rayCaster.cast(this._buffer, spatialData.cells, this._size, origo, 1, CellFlag.FilledLight);
+    }
+
+    isVisible(position: ReadonlyVec3): boolean {
+        if (!isInsideVec3(position, this._boundsMin, this._boundsMax)) {
+            const errorData = { position, cellBoundsMin: this._boundsMin, cellBoundsMax: this._boundsMax };
+            reportError(new Error('Tried testing visibility out of bounds'), errorData);
+            return false;
+        }
+
+        return this._buffer[
+            position[0] +
+            position[1] * this._xStride +
+            position[2] * this._xyStride
+        ] !== 0;
+    }
+
+    rebuild(world: World): void {
+        this._size = world.size();
+        this._xStride = this._size[0];
+        this._xyStride = this._size[0] * this._size[1];
+        this._boundsMin = world.boundsMin();
+        this._boundsMax = world.boundsMax();
+        this._buffer = new Uint8Array(volume(this._size));
+    }
+}
+
+export function newFieldOfViewCache(): FieldOfViewCache {
+    return new FieldOfViewCacheImpl();
+}
+
+export interface Cache {
+    readonly spatial: SpatialCache,
+    readonly fieldOfView: FieldOfViewCache
+}
+
+export function newCache(): Cache {
+    return {
+        spatial: newSpatialCache(),
+        fieldOfView: newFieldOfViewCache(),
+    };
 }

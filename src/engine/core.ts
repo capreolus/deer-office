@@ -5,7 +5,7 @@
  * The core implementation for the game engine.
  */
 
-import { newSpatialCache, SpatialCache } from './cache';
+import { Cache, newCache } from './cache';
 import { performActions, updatePlayerMemory } from './system';
 import { World } from './world';
 
@@ -16,22 +16,25 @@ export interface Engine {
 
 class EngineImpl implements Engine {
     private _world: World|null = null;
-    private _cache: SpatialCache = newSpatialCache();
+    private _cache: Cache = newCache();
 
     setWorld(world: World|null):void {
         this._world = world;
         if (this._world != null) {
-            this._cache.rebuild(this._world);
+            this._cache.spatial.rebuild(this._world);
+            this._cache.fieldOfView.rebuild(this._world);
+            updatePlayerMemory(this._world, this._cache);
         }
     }
 
     stepWorld(): void {
-        if (this._world == null) {
-            return;
-        }
-
+        if (this._world == null) { return; }
+        const tBegin = performance.now();
         performActions(this._world, this._cache);
-        updatePlayerMemory(this._world);
+        updatePlayerMemory(this._world, this._cache);
+        const tEnd = performance.now();
+        console.log(`Game turn ${this._world.time()} took: ${tEnd - tBegin}ms`);
+        this._world.stepTime();
     }
 }
 

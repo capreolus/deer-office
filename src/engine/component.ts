@@ -28,17 +28,19 @@ export function newComponentAppearance(visualType = VisualType.Unknown): Compone
 }
 
 export interface ComponentCollision {
-    shape: Shape
+    physical: Shape
+    light: Shape
 }
 
-export function newComponentCollision(shape: Shape = Shape.Empty): ComponentCollision {
-    return { shape };
+export function newComponentCollision(physical: Shape = Shape.Empty, light: Shape = Shape.Empty): ComponentCollision {
+    return { physical, light };
 }
 
 export interface ComponentMemory {
     readonly entities: Map<number, Impression>;
     position: Vec3
     areaSize: Vec3
+    areaTime: number
 }
 
 export function newComponentMemory(): ComponentMemory {
@@ -46,6 +48,7 @@ export function newComponentMemory(): ComponentMemory {
         entities: new Map(),
         position: newVec3(),
         areaSize: newVec3(),
+        areaTime: 0,
     };
 }
 
