@@ -6,7 +6,7 @@
  */
 
 import { reportError } from './error';
-import { cloneVec3, diffVec3, dotVec3, floorVec3, greatestDivisor, isEqualVec3, newVec3, prodVec3XYZ, quotVec3XYZ, ReadonlyVec3, Vec3 } from './math';
+import { cloneVec3, diffVec3, dotVec3, floorVec3, greatestDivisor, isEqualVec3, newVec3, prodVec3XYZ, quotVec3XYZ, ReadonlyVec3, sumVec3, Vec3 } from './math';
 
 const Constants = {
     MaxDelta: 256,
@@ -56,29 +56,6 @@ export function radiusToCellCoordinates(r: number, xMax: number, yMax: number, z
     }
 
     return output;
-}
-
-function cellCoordinatesToVoxelCorners(list: ReadonlyVec3[], scale: number): Vec3[] {
-    const corners: number[] = [];
-
-    for (let v of list) {
-        const [x, y, z] = v;
-        const px = x * scale;
-        const py = y * scale;
-        const pz = z * scale;
-
-        for (let oz = 0; oz <= scale; oz += scale) {
-            for (let oy = 0; oy <= scale; oy += scale) {
-                for (let ox = 0; ox <= scale; ox += scale) {
-                    corners.push(packXYZ(px + ox, py + oy, pz + oz));
-                }
-            }
-        }
-    }
-
-    return [...(new Set(corners))]
-        .sort((a: number, b: number) => a - b)
-        .map(e => unpack(e));
 }
 
 function filterRayTargets(origo: ReadonlyVec3, targets: ReadonlyVec3[]): Vec3[] {
@@ -196,8 +173,8 @@ class RayCasterImpl implements RayCaster {
     constructor (radius: number, xMax: number, yMax: number, zMax: number) {
         const origo = newVec3(1, 1, 1);
         const cells = radiusToCellCoordinates(radius, xMax, yMax, zMax);
-        const corners = cellCoordinatesToVoxelCorners(cells, 2);
-        const unique = filterRayTargets(origo, corners);
+        const transformed = cells.map(v => sumVec3(prodVec3XYZ(v, 2, 2, 2), origo));
+        const unique = filterRayTargets(origo, transformed);
 
         const rays: number[] = [];
         const limits: number[] = [];
