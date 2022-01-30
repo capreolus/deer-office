@@ -85,9 +85,9 @@ function filterRayTargets(origo: ReadonlyVec3, targets: ReadonlyVec3[]): Vec3[] 
     const indexToEntry: Map<number, ReadonlyVec3> = new Map();
 
     for (let v of targets) {
-        const div = greatestDivisor(v);
-        const index = pack(quotVec3XYZ(v, div, div, div));
         const delta = diffVec3(v, origo);
+        const div = greatestDivisor(delta);
+        const index = pack(quotVec3XYZ(delta, div, div, div));
         const sqr = dotVec3(delta, delta);
 
         if (!indexToEntry.has(index)) {
